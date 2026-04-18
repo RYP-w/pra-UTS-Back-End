@@ -1,0 +1,7 @@
+/node_modules
+/.FILE
+/.idea
+/.vscode
+/.env
+/src/controller
+/src/guard

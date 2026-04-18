@@ -1,0 +1,2 @@
+mengatur hubungan antara aplikasi Node.js ke bagian luar, (misal Database SQL)
+// kayaknya dikit sih file di dalamnya, `database.js` untuk inisialisasi database
