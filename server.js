@@ -1,8 +1,8 @@
 import express from 'express';
-import usersRoutes from './src/routes/routes_users.js';
-import storesRoutes from './src/routes/routes.stores.js';
-import productsRoutes from './src/routes/routes_products.js';
-import ordersRoutes from './src/routes/routes_orders.js';
+import usersRoutes from './src/routes/users_routes.js';
+import storesRoutes from './src/routes/stores_routes.js';
+import productsRoutes from './src/routes/products_routes.js';
+import ordersRoutes from './src/routes/orders_routes.js';
 
 
 const PORT = 3000;

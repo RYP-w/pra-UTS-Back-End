@@ -1,4 +1,0 @@
-lebih musah di cerna, adalah models itu adalah Perwakilan Database, isi dari models berupa fungsi fungsi yang akan mengembalikan data dari database
-misal:
-getAllUsers();
-maka fungsi tersebut akan menghasilkan output semua users yang ada di database.
