@@ -2,14 +2,28 @@ import express from 'express';
 import orderController from '../controller/order_controller.js';
 import database from '../config/database.js';
 import orderProductsRoutes from './orderProducts_routes.js';
+import guard from '../guard/guard.js';
 
 const router = express.Router();
 
-router.post('/', orderController.createOrder); //? Buat order
+
+router.post('/', async (req, res) => {
+    guard.setGuard(req, res, {required:{"id_user":"number","status":"string"}, optional:{}})
+    orderController.createOrder(req, res);
+}); //? Buat order
+
 router.get('/', orderController.getAllOrders); //? Dapatkan semua order
+
 router.get('/:idOrder', orderController.getOrder); //? Dapatkan detail order
-router.put('/:idOrder/status', orderController.updateStatusOrder); //? Update status order
+
+router.put('/:idOrder/status', async (req, res) => {
+    guard.setGuard(req, res, {required:{}, optional:{"status":"string"}})
+    orderController.updateStatusOrder(req, res);
+}); //? Update status order
+
 router.delete('/:idOrder', orderController.deleteOrder); //? Hapus order
+
 router.use('/:idOrder/products', orderProductsRoutes); //<?> [SUB-ROUTING]
+
 
 export default router;
