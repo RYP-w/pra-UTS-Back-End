@@ -1,10 +1,11 @@
 {
   "name": "pra-uts",
   "version": "1.0.0",
-  "description": "",
+  "description": "``` cmd\r npm install express mysql2\r npm install -g nodemon\r ```\r ## run\r ``` cmd\r nodemon server.js\r ```",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +14,14 @@
   "dependencies": {
     "express": "^5.2.1",
     "mysql2": "^3.22.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RYP-w/pra-UTS-Back-End.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RYP-w/pra-UTS-Back-End/issues"
+  },
+  "homepage": "https://github.com/RYP-w/pra-UTS-Back-End#readme"
 }
