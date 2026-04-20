@@ -1,19 +1,21 @@
 import mysql2 from 'mysql2'
 
-const database = mysql2.createConnection({
+const database = mysql2.createPool({
     host:'localhost',
     user:'root',
     password:'',
     database: 'e_commerce_pra_uts_db',
-    waitForConnections:true
+    waitForConnections:true,
+    connectionLimit: 10,
 });
 
-database.connect(err => {
+database.getConnection((err, connection) => {
     if (err) {
-        console.log("Terjadi kesalahan pada koneksi database\n",err.message);
+        console.log("Terjadi kesalahan pada koneksi database\n", err.message);
     } else {
-        console.log("[ Koneksi database berhasil ]");        
+        console.log("[ Koneksi database berhasil ]");
+        connection.release();  
     }
-})
+});
 
 export default database.promise();

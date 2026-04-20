@@ -41,12 +41,25 @@ async function updateStatusOrder(req, res) {
 }
 
 async function deleteOrder(req, res) {
-    const q = "delete from orderss where id = ?";
+    const id_order = req.params.idOrder;
+    const connection = await database.getConnection();
+
     try {
-        const [result] = await database.query(q, [req.params.idOrder]);
+        await connection.beginTransaction();
+
+        // 1. Hapus semua produk yang berelasi dengan id_order di tabel order_products
+        await connection.query("DELETE FROM order_products WHERE id_order = ?", [id_order]);
+
+        // 2. Hapus data order di tabel orders
+        const [result] = await connection.query("DELETE FROM orders WHERE id = ?", [id_order]);
+
+        await connection.commit();
         res.send(result);
     } catch (err) {
+        await connection.rollback();
         res.status(500).json({error: err.message});
+    } finally {
+        connection.release();
     }
 }
 
