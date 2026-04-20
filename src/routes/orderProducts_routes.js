@@ -1,5 +1,5 @@
 import express from 'express';
-import orderProductsController from '../controller/orderProductsController.js';
+import orderProductsController from '../controller/orderProducts_controller.js';
 import database from '../config/database.js';
 
 const router = express.Router({ mergeParams: true });

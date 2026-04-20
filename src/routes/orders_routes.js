@@ -1,5 +1,5 @@
 import express from 'express';
-import orderController from '../controller/orderController.js';
+import orderController from '../controller/order_controller.js';
 import database from '../config/database.js';
 import orderProductsRoutes from './orderProducts_routes.js';
 
