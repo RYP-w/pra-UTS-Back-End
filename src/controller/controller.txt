@@ -1,0 +1,1 @@
+Jembatan antara route dan model. Menerima request, memanggil model, lalu mengirim response

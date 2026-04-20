@@ -1,0 +1,2 @@
+Fungsi:
+Kode yang berjalan di antara request dan response. Dipakai untuk validasi input,

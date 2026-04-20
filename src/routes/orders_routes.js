@@ -7,19 +7,19 @@ import guard from '../guard/guard.js';
 const router = express.Router();
 
 
-router.post('/', async (req, res) => {
+router.post('/', async (req, res) => { //? Buat order
     guard.setGuard(req, res, {required:{"id_user":"number","status":"string"}, optional:{}})
     orderController.createOrder(req, res);
-}); //? Buat order
+}); 
 
 router.get('/', orderController.getAllOrders); //? Dapatkan semua order
 
 router.get('/:idOrder', orderController.getOrder); //? Dapatkan detail order
 
-router.put('/:idOrder/status', async (req, res) => {
+router.put('/:idOrder/status', async (req, res) => { //? Update status order
     guard.setGuard(req, res, {required:{}, optional:{"status":"string"}})
     orderController.updateStatusOrder(req, res);
-}); //? Update status order
+}); 
 
 router.delete('/:idOrder', orderController.deleteOrder); //? Hapus order
 
