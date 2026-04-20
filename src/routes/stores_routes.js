@@ -1,15 +1,27 @@
 import express from 'express';
-import storeController from '../controller/storeController.js';
+import storeController from '../controller/store_controller.js';
 import database from '../config/database.js';
 import storeProductsRoutes from './storeProducts_routes.js';
+import guard from '../guard/guard.js';
 
 const router = express.Router();
 
-router.post('/', storeController.createStore); //? Tambahkan toko
+router.post('/', async (requestAnimationFrame, res) => { //? Tambahkan toko
+    guard.setGuard(req, res, {required:{"name":"string","address":"string"}, optional:{}});
+    storeController.createStore(requestAnimationFrame, res);
+});
+
 router.get('/', storeController.getAllStores); //? Dapatkan semua toko
+
 router.get('/:idStore', storeController.getStoreDetails); //? Dapatkan detail toko
-router.put('/:idStore', storeController.updateStoreData); //? Update data pada toko
+
+router.put('/:idStore', async (req, res) => { //? Update data pada toko
+    guard.setGuard(req, res, {required:{}, optional:{"name":"string","address":"string"}});
+    storeController.updateStoreData(req, res);
+});
+
 router.delete('/:idStore', storeController.deleteStore); //? Hapus toko
-router.use('/:idStore/products', storeProductsRoutes); //<?> [SUB-ROUTING]
+
+router.use('/:idStore/products', storeProductsRoutes); //<?> [SUB-ROUTING] 
 
 export default router;

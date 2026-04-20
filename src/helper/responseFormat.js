@@ -17,7 +17,7 @@ function sendResponseFormat(response, statusCode, message, data = null, error = 
         result["error"] = error
     }
 
-    res.status(statusCode).json(result);
+    response.status(statusCode).json(result);
 }
 
 export default {sendResponseFormat};
