@@ -74,9 +74,12 @@ async function updateProductData(req, res) {
   const q = 'update products set ? where id = ?';
   try {
     const [result] = await database.query(q, [req.body, req.params.idProduct]);
-    res.send(result);
+    if (result.affectedRows == 0) {
+      return sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
+    }
+    return sendResponseFormat(res, 200, 'Berhasil update data product', null);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
