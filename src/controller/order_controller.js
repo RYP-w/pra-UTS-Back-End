@@ -133,23 +133,28 @@ async function deleteOrder(req, res) {
   try {
     await connection.beginTransaction();
 
-    // 1. Hapus semua produk yang berelasi dengan id_order di tabel order_products
+    // 1. Hapus semua order_products yang berelasi dulu (karena ada foreign key)
     await connection.query('DELETE FROM order_products WHERE id_order = ?', [id_order]);
 
-    // 2. Hapus data order di tabel orders
+    // 2. Baru hapus order-nya
     const [result] = await connection.query('DELETE FROM orders WHERE id = ?', [id_order]);
 
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return sendResponseFormat(res, 404, `Order dengan id ${id_order} tidak ditemukan`, null, 'NOT_FOUND');
+    }
+
     await connection.commit();
-    res.send(result);
+    return sendResponseFormat(res, 200, `Berhasil menghapus order dengan id ${id_order}`, null);
   } catch (err) {
     await connection.rollback();
-    res.status(500).json({ error: err.message });
+    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   } finally {
     connection.release();
   }
 }
 
-const productController = {
+const orderController = {
   createOrder,
   getAllOrders,
   getOrder,
@@ -157,4 +162,4 @@ const productController = {
   deleteOrder,
 };
 
-export default productController;
+export default orderController;
