@@ -51,7 +51,7 @@ async function getAllProducts(req, res) {
       prev_page: currentPage > 1,
     };
 
-    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil mengambil semua data product', rows, null, filterInfo, paginationInfo);
+    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil ambil semua data product', rows, null, filterInfo, paginationInfo);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -61,9 +61,12 @@ async function getProductDetail(req, res) {
   const q = 'select * from products where id = ?';
   try {
     const [result] = await database.query(q, [req.params.idProduct]);
-    res.send(result);
+    if (result.length === 0) {
+      return sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
+    }
+    return sendResponseFormat(res, 200, 'Berhasil ambil detail product', result[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
