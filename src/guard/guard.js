@@ -1,15 +1,15 @@
-import { sendResponseFormat } from '../helper/responseFormat.js';
+import responseFormat from '../helper/responseFormat.js';
 
 function setGuard(request, response, rules = { required: {}, optional: {} }) {
   const unknownKeys = checkMissingAttributes(request.body, rules);
   if (unknownKeys.length > 0) {
-    sendResponseFormat(response, 400, `Unknown attribute detected`, null, [`These attributes are not allowed: ${unknownKeys.join(', ')}`]);
+    responseFormat.sendResponseFormat(response, 400, `Unknown attribute detected`, null, [`These attributes are not allowed: ${unknownKeys.join(', ')}`]);
     return false;
   }
 
   const { missingKeys, wrongTypes: requiredWrongTypes } = requiredPropertiesGuard(request.body, rules.required);
   if (missingKeys.length > 0) {
-    sendResponseFormat(
+    responseFormat.sendResponseFormat(
       response,
       400,
       `Missing required attributes`,
@@ -22,7 +22,7 @@ function setGuard(request, response, rules = { required: {}, optional: {} }) {
   const optionalWrongTypes = optionalPropertiesGuard(request.body, rules.optional);
   const allWrongTypes = [...requiredWrongTypes, ...optionalWrongTypes];
   if (allWrongTypes.length > 0) {
-    sendResponseFormat(
+    responseFormat.sendResponseFormat(
       response,
       400,
       `Invalid data type`,
