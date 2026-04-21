@@ -7,7 +7,7 @@ import guard from '../guard/guard.js';
 const router = express.Router();
 
 router.post('/', async (requestAnimationFrame, res) => { //? Tambahkan toko
-    if (guard.setGuard(req, res, {required:{"name":"string","address":"string"}, optional:{}})) {
+    if (!guard.setGuard(req, res, {required:{"name":"string","address":"string"}, optional:{}})) {
         return;
     }
     storeController.createStore(requestAnimationFrame, res);
@@ -18,7 +18,7 @@ router.get('/', storeController.getAllStores); //? Dapatkan semua toko
 router.get('/:idStore', storeController.getStoreDetails); //? Dapatkan detail toko
 
 router.put('/:idStore', async (req, res) => { //? Update data pada toko
-    if (guard.setGuard(req, res, {required:{}, optional:{"name":"string","address":"string"}})) {
+    if (!guard.setGuard(req, res, {required:{}, optional:{"name":"string","address":"string"}})) {
         return;
     }
     storeController.updateStoreData(req, res);

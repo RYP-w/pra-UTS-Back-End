@@ -6,7 +6,7 @@ import guard from '../guard/guard.js';
 const router = express.Router({ mergeParams: true });
 
 router.post('/', async (req, res) => { //? Tambahkan produk pada toko
-    if (guard.setGuard(req, res, {required:{"price":"number", "quantity":"number"}, optional:{}})) {
+    if (!guard.setGuard(req, res, {required:{"price":"number", "quantity":"number"}, optional:{}})) {
         return;
     }
     storeProductController.addProduct_To_Store(req, res);
@@ -17,7 +17,7 @@ router.get('/', storeProductController.getAllProducts_In_Store) //? Dapatkan sem
 router.get('/:idProduct', storeProductController.getProductDetails_In_Store) //? Dapatkan detail pada produk di toko
 
 router.put('/:idProduct', async (req, res) => { //? Update data pada produk di toko
-    if (guard.setGuard(req, res, {required:{}, optional:{"price":"number", "quantity":"number"}})) {
+    if (!guard.setGuard(req, res, {required:{}, optional:{"price":"number", "quantity":"number"}})) {
         return;
     }
     storeProductController.updateProductData_In_Store(req, res);

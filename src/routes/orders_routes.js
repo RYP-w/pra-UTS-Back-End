@@ -8,7 +8,7 @@ const router = express.Router();
 
 
 router.post('/', async (req, res) => { //? Buat order
-    if (guard.setGuard(req, res, {required:{"id_user":"number","status":"string"}, optional:{}})) {
+    if (!guard.setGuard(req, res, {required:{"id_user":"number","status":"string"}, optional:{}})) {
         return;
     }
     orderController.createOrder(req, res);
@@ -19,7 +19,7 @@ router.get('/', orderController.getAllOrders); //? Dapatkan semua order
 router.get('/:idOrder', orderController.getOrder); //? Dapatkan detail order
 
 router.put('/:idOrder/status', async (req, res) => { //? Update status order
-    if (guard.setGuard(req, res, {required:{}, optional:{"status":"string"}})) {
+    if (!guard.setGuard(req, res, {required:{}, optional:{"status":"string"}})) {
         return;
     }
     orderController.updateStatusOrder(req, res);

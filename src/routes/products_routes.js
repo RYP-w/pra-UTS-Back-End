@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 router.post('/', async (req, res) => { //? Tambahkan produk
-    if (guard.setGuard(req, res, {required:{"name":"string","description":"string"}, optional:{}})) {
+    if (!guard.setGuard(req, res, {required:{"name":"string","description":"string"}, optional:{}})) {
         return;
     }
     productController.createProduct(req, res);
@@ -18,7 +18,7 @@ router.get('/', productController.getAllProducts) //? Dapatkan semua produk
 router.get('/:idProduct', productController.getProductDetail) //? Dapatkan detail produk
 
 router.put('/:idProduct', async (req, res) => { //? Update data pada produk
-    if (guard.setGuard(req, res, {required:{}, optional:{"name":"string","description":"string"}})) {
+    if (!guard.setGuard(req, res, {required:{}, optional:{"name":"string","description":"string"}})) {
         return;
     }
     productController.updateProductData(req, res);
