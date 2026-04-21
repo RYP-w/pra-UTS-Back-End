@@ -86,12 +86,25 @@ async function getAllOrders(req, res) {
 }
 
 async function getOrder(req, res) {
-  const q = 'select * from orders where id = ?';
+  const q = `
+    SELECT 
+      o.id,
+      o.id_user,
+      u.name  AS user_name,
+      o.date,
+      o.status,
+      o.total_price
+    FROM orders o
+    JOIN users u ON o.id_user = u.id
+    WHERE o.id = ?`;
   try {
     const [result] = await database.query(q, [req.params.idOrder]);
-    res.send(result);
+    if (result.length === 0) {
+      return sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
+    }
+    return sendResponseFormat(res, 200, 'Berhasil mengambil detail order', result[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
