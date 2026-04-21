@@ -87,9 +87,12 @@ async function deleteProduct(req, res) {
   const q = 'delete from products where id = ?';
   try {
     const [result] = await database.query(q, [req.params.idProduct]);
-    res.send(result);
+    if (result.affectedRows == 0) {
+      return sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
+    }
+    return sendResponseFormat(res, 200, `Berhasil menghapus product dengan id ${req.params.idProduct}`, null);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
