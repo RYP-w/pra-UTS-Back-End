@@ -11,13 +11,77 @@ async function createOrder(req, res) {
   }
 }
 
+const VALID_STATUS = ['pending', 'proses', 'dikirim', 'selesai'];
+
 async function getAllOrders(req, res) {
-  const q = 'select * from orders;';
   try {
-    const [result] = await database.query(q);
-    res.send(result);
+    const { status, id_user, page, limit } = req.query;
+
+    // Validasi status jika dikirim
+    if (status && !VALID_STATUS.includes(status)) {
+      return sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
+    }
+
+    const conditions = [];
+    const values = [];
+
+    if (status) {
+      conditions.push('o.status = ?');
+      values.push(status); // status harus exact match, bukan LIKE
+    }
+
+    if (id_user) {
+      conditions.push('o.id_user = ?');
+      values.push(id_user);
+    }
+
+    let whereS = '';
+    if (conditions.length > 0) {
+      whereS = `WHERE ${conditions.join(' AND ')}`;
+    }
+
+    const [countResult] = await database.query(`SELECT COUNT(*) AS total FROM orders o ${whereS}`, values);
+    const totalData = countResult[0].total;
+
+    const currentPage = parseInt(page) || 1;
+    const itemsPerPage = parseInt(limit) || 10;
+    const offset = (currentPage - 1) * itemsPerPage;
+    const totalPages = Math.ceil(totalData / itemsPerPage);
+
+    // JOIN ke users supaya nama user ikut tampil
+    const [rows] = await database.query(
+      `SELECT 
+        o.id,
+        o.id_user,
+        u.name  AS user_name,
+        o.date,
+        o.status,
+        o.total_price
+      FROM orders o
+      JOIN users u ON o.id_user = u.id
+      ${whereS}
+      ORDER BY o.date DESC
+      LIMIT ? OFFSET ?`,
+      [...values, itemsPerPage, offset],
+    );
+
+    const filterInfo = {
+      status: status || null,
+      id_user: id_user || null,
+    };
+
+    const paginationInfo = {
+      current_page: currentPage,
+      items_per_page: itemsPerPage,
+      total_data: totalData,
+      total_pages: totalPages,
+      next_page: currentPage < totalPages,
+      prev_page: currentPage > 1,
+    };
+
+    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil mengambil semua data order', rows, null, filterInfo, paginationInfo);
   } catch (err) {
-    res.status(500).send({ error: err.message });
+    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
