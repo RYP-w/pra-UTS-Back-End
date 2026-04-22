@@ -1,10 +1,33 @@
+# API E-Commerce
 
-## setup
+## Daftar Kontributor
+
+| Nama | NIM | Peran / Topik Kontribusi | GitHub |
+| :--- | :--- | :--- | :--- |
+| Rizky Saputra Pakpahan | 241111536 | - Setup Project<br>- Membuat struktur database<br>- Validasi input & error handling | [@RYP-w](https://github.com/RYP-w) |
+
+
+
+## Getting Started
+### Require
+**[`NodeJS`](https://nodejs.org/en/download)**: JavaScript runtime environment (untuk menjalankan server backend)<br>
+**[`XAMPP`](https://www.apachefriends.org/)**: local web server environment (digunakan untuk menjalankan server database MySQL)<br>
+**[`Postman`](https://www.postman.com/downloads/)**: aplikasi pengujian API
+### Setup
+#### Step 1. Clone Repositori
+``` cmd
+git clone https://github.com/RYP-w/pra-UTS-Back-End.git
+cd pra-UTS-Back-End
+```
+#### Step 2. Inisialisasi Projek
 ``` cmd
 npm install express mysql2
-npm install -g nodemon
 ```
-## run
+#### Step 3. Konfigurasi Database MySQL ke Client
+- Pada XAMPP Control Panel, nyalakan modul **Apache** dan **MySQL** dengan menekan `start`
+- Pada [phpMyAdmin](http://localhost/phpmyadmin/) buat Database dengn nama `e_commerce_pra_uts_db`
+- Import Database pada file [database_version_4.sql](src\database\database_version_4.sql) yang terdapat pada repositori ini kedalam Database yang sudah di buat
+#### Step 4. Nyalakan Server API
 ``` cmd
-nodemon server.js
+node server.js
 ```
