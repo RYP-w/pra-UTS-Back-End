@@ -1,13 +1,13 @@
 import database from '../config/database.js';
-import { sendResponseFormat } from '../helper/responseFormat.js';
+import responseFormat from '../helper/responseFormat.js';
 
 async function createOrder(req, res) {
   const q = 'insert into orders set ?';
   try {
     const [result] = await database.query(q, [req.body]);
-    return sendResponseFormat(res, 201, 'Berhasil menambahkan order', { id: result.insertId });
+    return responseFormat.sendResponseFormat(res, 201, 'Berhasil menambahkan order', { id: result.insertId });
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -19,7 +19,7 @@ async function getAllOrders(req, res) {
 
     // Validasi status jika dikirim
     if (status && !VALID_STATUS.includes(status)) {
-      return sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
+      return responseFormat.sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
     }
 
     const conditions = [];
@@ -79,9 +79,9 @@ async function getAllOrders(req, res) {
       prev_page: currentPage > 1,
     };
 
-    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil mengambil semua data order', rows, null, filterInfo, paginationInfo);
+    return responseFormat.sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil mengambil semua data order', rows, null, filterInfo, paginationInfo);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -100,29 +100,29 @@ async function getOrder(req, res) {
   try {
     const [result] = await database.query(q, [req.params.idOrder]);
     if (result.length === 0) {
-      return sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil mengambil detail order', result[0]);
+    return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengambil detail order', result[0]);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
 async function updateStatusOrder(req, res) {
   // Validasi status jika dikirim di body
   if (req.body.status && !VALID_STATUS.includes(req.body.status)) {
-    return sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
+    return responseFormat.sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
   }
 
   const q = 'update orders set ? where id = ?';
   try {
     const [result] = await database.query(q, [req.body, req.params.idOrder]);
     if (result.affectedRows === 0) {
-      return sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil mengupdate status order', null);
+    return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengupdate status order', null);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -141,14 +141,14 @@ async function deleteOrder(req, res) {
 
     if (result.affectedRows === 0) {
       await connection.rollback();
-      return sendResponseFormat(res, 404, `Order dengan id ${id_order} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Order dengan id ${id_order} tidak ditemukan`, null, 'NOT_FOUND');
     }
 
     await connection.commit();
-    return sendResponseFormat(res, 200, `Berhasil menghapus order dengan id ${id_order}`, null);
+    return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus order dengan id ${id_order}`, null);
   } catch (err) {
     await connection.rollback();
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   } finally {
     connection.release();
   }

@@ -1,13 +1,13 @@
 import database from '../config/database.js';
-import { sendResponseFormat } from '../helper/responseFormat.js';
+import responseFormat from '../helper/responseFormat.js';
 
 async function createStore(req, res) {
   const q = 'insert into stores set ?';
   try {
     const [result] = await database.query(q, [req.body]);
-    return sendResponseFormat(res, 201, 'Berhasil menambahkan store', { id: result.insertId });
+    return responseFormat.sendResponseFormat(res, 201, 'Berhasil menambahkan store', { id: result.insertId });
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -57,9 +57,9 @@ async function getAllStores(req, res) {
       prev_page: currentPage > 1,
     };
 
-    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil ambil semua data store', rows, null, filterInfo, paginationInfo);
+    return responseFormat.sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil ambil semua data store', rows, null, filterInfo, paginationInfo);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -68,11 +68,11 @@ async function getStoreDetails(req, res) {
   try {
     const [result] = await database.query(q, [req.params.idStore]);
     if (result.length === 0) {
-      return sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil mengambil detail store', result[0]);
+    return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengambil detail store', result[0]);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -81,11 +81,11 @@ async function updateStoreData(req, res) {
   try {
     const [result] = await database.query(q, [req.body, req.params.idStore]);
     if (result.affectedRows === 0) {
-      return sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil mengupdate data store', null);
+    return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengupdate data store', null);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -94,11 +94,11 @@ async function deleteStore(req, res) {
   try {
     const [result] = await database.query(q, [req.params.idStore]);
     if (result.affectedRows === 0) {
-      return sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, `Berhasil menghapus store dengan id ${req.params.idStore}`, null);
+    return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus store dengan id ${req.params.idStore}`, null);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
