@@ -26,7 +26,7 @@ npm install express mysql2
 #### Step 3. Konfigurasi Database MySQL ke Client
 - Pada XAMPP Control Panel, nyalakan modul **Apache** dan **MySQL** dengan menekan `start`
 - Pada [phpMyAdmin](http://localhost/phpmyadmin/) buat Database dengn nama `e_commerce_pra_uts_db`
-- Import Database pada file [database_version_4.sql](src\database\database_version_4.sql) yang terdapat pada repositori ini kedalam Database yang sudah di buat
+- Import Database pada file [database_version_4.sql](https://github.com/RYP-w/pra-UTS-Back-End/blob/main/src/database/database_version_4.sql) yang terdapat pada repositori ini kedalam Database yang sudah di buat
 #### Step 4. Nyalakan Server API
 ``` cmd
 node server.js
