@@ -1,5 +1,7 @@
 # API E-Commerce
 
+[**README on GitHub**](https://github.com/RYP-w/pra-UTS-Back-End)
+
 ## Daftar Kontributor
 
 | Nama | NIM | Peran / Topik Kontribusi | GitHub |
