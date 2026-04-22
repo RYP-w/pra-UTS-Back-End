@@ -1,28 +1,46 @@
 import express from 'express';
 import storeProductController from '../controller/storeProducts_controller.js';
-import database from '../config/database.js';
 import guard from '../guard/guard.js';
 
 const router = express.Router({ mergeParams: true });
 
-router.post('/', async (req, res) => { //? Tambahkan produk pada toko
-    if (!guard.setGuard(req, res, {required:{"price":"number", "quantity":"number"}, optional:{}})) {
-        return;
-    }
-    storeProductController.addProduct_To_Store(req, res);
-}) 
+// POST /api/stores/:idStore/products
+// Tambahkan produk ke toko
+router.post('/', async (req, res) => {
+  if (
+    !guard.setGuard(req, res, {
+      required: {
+        id_product: 'number', // ← wajib ada, id produk yang ingin ditambahkan
+        price: 'number',
+        quantity: 'number',
+      },
+      optional: {},
+    })
+  )
+    return;
 
-router.get('/', storeProductController.getAllProducts_In_Store) //? Dapatkan semua produk pada toko
+  storeProductController.addProduct_To_Store(req, res);
+});
 
-router.get('/:idProduct', storeProductController.getProductDetails_In_Store) //? Dapatkan detail pada produk di toko
+router.get('/', storeProductController.getAllProducts_In_Store);
 
-router.put('/:idProduct', async (req, res) => { //? Update data pada produk di toko
-    if (!guard.setGuard(req, res, {required:{}, optional:{"price":"number", "quantity":"number"}})) {
-        return;
-    }
-    storeProductController.updateProductData_In_Store(req, res);
-}) 
+router.get('/:idProduct', storeProductController.getProductDetails_In_Store);
 
-router.delete('/:idProduct', storeProductController.removeProduct_From_Store) //? Hapus produk pada toko
+router.put('/:idProduct', async (req, res) => {
+  if (
+    !guard.setGuard(req, res, {
+      required: {},
+      optional: {
+        price: 'number',
+        quantity: 'number',
+      },
+    })
+  )
+    return;
+
+  storeProductController.updateProductData_In_Store(req, res);
+});
+
+router.delete('/:idProduct', storeProductController.removeProduct_From_Store);
 
 export default router;

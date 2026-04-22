@@ -5,7 +5,8 @@ async function createProduct(req, res) {
   const q = 'insert into products set ?';
   try {
     const [result] = await database.query(q, [req.body]);
-    return sendResponseFormat(res, 201, 'Berhasil menambahkan product', { id: result.insertId });
+    const [newProduct] = await database.query('SELECT * FROM products WHERE id = ?', [result.insertId]);
+    return sendResponseFormat(res, 201, 'Berhasil menambahkan product', newProduct[0]);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -77,7 +78,8 @@ async function updateProductData(req, res) {
     if (result.affectedRows == 0) {
       return sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil update data product', null);
+    const [updated] = await database.query('SELECT * FROM products WHERE id = ?', [req.params.idProduct]);
+    return sendResponseFormat(res, 200, 'Berhasil update data product', updated[0]);
   } catch (err) {
     sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -86,11 +88,14 @@ async function updateProductData(req, res) {
 async function deleteProduct(req, res) {
   const q = 'delete from products where id = ?';
   try {
-    const [result] = await database.query(q, [req.params.idProduct]);
-    if (result.affectedRows == 0) {
+    // ambil data sebelum dihapus
+    const [existing] = await database.query('SELECT * FROM products WHERE id = ?', [req.params.idProduct]);
+    if (existing.length === 0) {
       return sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, `Berhasil menghapus product dengan id ${req.params.idProduct}`, null);
+    await database.query(q, [req.params.idProduct]);
+    // balek data yang sudah dihapus
+    return sendResponseFormat(res, 200, `Berhasil menghapus user dengan id ${req.params.idProduct}`, existing[0]);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }

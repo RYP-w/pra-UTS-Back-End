@@ -5,7 +5,8 @@ async function createOrder(req, res) {
   const q = 'insert into orders set ?';
   try {
     const [result] = await database.query(q, [req.body]);
-    return sendResponseFormat(res, 201, 'Berhasil menambahkan order', { id: result.insertId });
+    const [newOrder] = await database.query('SELECT * FROM orders WHERE id = ?', [result.insertId]);
+    return sendResponseFormat(res, 201, 'Berhasil menambahkan order', newOrder[0]);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -120,7 +121,8 @@ async function updateStatusOrder(req, res) {
     if (result.affectedRows === 0) {
       return sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil mengupdate status order', null);
+    const [updated] = await database.query('SELECT * FROM orders WHERE id = ?', [req.params.idOrder]);
+    return sendResponseFormat(res, 200, 'Berhasil mengupdate status order', updated[0]);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -131,21 +133,32 @@ async function deleteOrder(req, res) {
   const connection = await database.getConnection();
 
   try {
-    await connection.beginTransaction();
+    // 1. Ambil data order SEBELUM dihapus
+    const [existing] = await connection.query(
+      `SELECT o.*, u.name AS user_name
+       FROM orders o
+       JOIN users u ON o.id_user = u.id
+       WHERE o.id = ?`,
+      [id_order],
+    );
 
-    // 1. Hapus semua order_products yang berelasi dulu (karena ada foreign key)
-    await connection.query('DELETE FROM order_products WHERE id_order = ?', [id_order]);
-
-    // 2. Baru hapus order-nya
-    const [result] = await connection.query('DELETE FROM orders WHERE id = ?', [id_order]);
-
-    if (result.affectedRows === 0) {
+    if (existing.length === 0) {
       await connection.rollback();
       return sendResponseFormat(res, 404, `Order dengan id ${id_order} tidak ditemukan`, null, 'NOT_FOUND');
     }
 
+    await connection.beginTransaction();
+
+    // 2. Hapus semua order_products yang berelasi dulu (karena ada foreign key)
+    await connection.query('DELETE FROM order_products WHERE id_order = ?', [id_order]);
+
+    // 3. Hapus order-nya
+    await connection.query('DELETE FROM orders WHERE id = ?', [id_order]);
+
     await connection.commit();
-    return sendResponseFormat(res, 200, `Berhasil menghapus order dengan id ${id_order}`, null);
+
+    // 4. Kembalikan data order yang sudah dihapus
+    return sendResponseFormat(res, 200, `Berhasil menghapus order dengan id ${id_order}`, existing[0]);
   } catch (err) {
     await connection.rollback();
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);

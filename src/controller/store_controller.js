@@ -5,7 +5,8 @@ async function createStore(req, res) {
   const q = 'insert into stores set ?';
   try {
     const [result] = await database.query(q, [req.body]);
-    return sendResponseFormat(res, 201, 'Berhasil menambahkan store', { id: result.insertId });
+    const [newStore] = await database.query('SELECT * FROM stores WHERE id = ?', [result.insertId]);
+    return sendResponseFormat(res, 201, 'Berhasil menambahkan store', newStore[0]);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -83,7 +84,8 @@ async function updateStoreData(req, res) {
     if (result.affectedRows === 0) {
       return sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil mengupdate data store', null);
+    const [updated] = await database.query('SELECT * FROM stores WHERE id = ?', [req.params.idStore]);
+    return sendResponseFormat(res, 200, 'Berhasil mengupdate data store', updated[0]);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -92,11 +94,13 @@ async function updateStoreData(req, res) {
 async function deleteStore(req, res) {
   const q = 'delete from stores where id = ?';
   try {
-    const [result] = await database.query(q, [req.params.idStore]);
-    if (result.affectedRows === 0) {
+    const [existing] = await database.query('SELECT * FROM stores WHERE id = ?', [req.params.idStore]);
+    if (existing.length === 0) {
       return sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, `Berhasil menghapus store dengan id ${req.params.idStore}`, null);
+    await database.query(q, [req.params.idStore]);
+    // balek data yang sudah dihapus
+    return sendResponseFormat(res, 200, `Berhasil menghapus store dengan id ${req.params.idStore}`, existing[0]);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
