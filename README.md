@@ -4,8 +4,9 @@
 
 | Nama | NIM | Peran / Topik Kontribusi | GitHub |
 | :--- | :--- | :--- | :--- |
-| Rizky Saputra Pakpahan | 241111536 | - Setup Project<br>- Membuat struktur database<br>- Validasi input & error handling | [@RYP-w](https://github.com/RYP-w) |
-| Christian de Midro Nainggolan | 241112767 | - Handle Route dan Controller | [@altairviel](https://github.com/altairviel) |
+| Rizky Saputra Pakpahan | 241111536 | - Setup Project<br>- Membuat struktur database<br>- Validasi input & error handling | [@RYP-w](https://github.com/RYP-w) | 
+Christian de Midro Nainggolan | 241112767 | - Handle Route dan Controller | [@altairviel](https://github.com/altairviel) |
+ Jhody Parsaoran Sitorus | 241112767 | -Pembuatan ResponseFormat dan Penerapannya | [@Linksoul101](https://github.com/Linksoul101)
 
 
 ## Getting Started
