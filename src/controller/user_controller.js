@@ -96,14 +96,30 @@ async function updateUserData(req, res) {
 }
 
 async function deleteUser(req, res) {
+    const connection = await database.getConnection();
     try {
-        const [result] = await database.query('SELECT * FROM users WHERE id= ?',[req.params.idUser]);
-        if (result.affectedRows === 0) {
-        return responseFormat.sendResponseFormat(res, 404, `User dengan id ${req.params.idUser} tidak ditemukan`, null, 'NOT_FOUND');
+        const [user] = await connection.query('SELECT * FROM users WHERE id = ?', [req.params.idUser]);
+
+        if (user.length === 0) {
+            return responseFormat.sendResponseFormat(res, 404, `User dengan id ${req.params.idUser} tidak ditemukan`, null, 'NOT_FOUND');
         }
-        return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus user dengan id ${req.params.idUser}`,result[0]);
+
+        await connection.beginTransaction();
+        // 1. Hapus order_products yang memiliki id user
+        await connection.query(`DELETE op FROM order_products op JOIN orders o ON o.id = op.id_order WHERE o.id_user = ?`, [req.params.idUser]);
+        // 2. Hapus orders yang memiliki id user
+        await connection.query('DELETE FROM orders WHERE id_user = ?', [req.params.idUser]);
+        // 3. hapus user 
+        await connection.query('DELETE FROM users WHERE id = ?', [req.params.idUser]);
+        await connection.commit();
+
+        return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus user dengan id ${req.params.idUser}`, user[0]);
+
     } catch (err) {
+        await connection.rollback();
         return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    } finally {
+        connection.release();
     }
 }
 
