@@ -91,15 +91,72 @@ async function updateStoreData(req, res) {
 }
 
 async function deleteStore(req, res) {
-  const q = 'delete from stores where id = ?';
+  const { idStore } = req.params;
+  const connection = await database.getConnection();
+
   try {
-    const [result] = await database.query(q, [req.params.idStore]);
-    if (result.affectedRows === 0) {
-      return responseFormat.sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
+    const [store] = await connection.query(
+      `SELECT * FROM stores WHERE id = ?`,
+      [idStore]
+    );
+
+    if (store.length === 0) {
+      return responseFormat.sendResponseFormat(
+        res, 404,
+        `Store dengan id ${idStore} tidak ditemukan`,
+        null, 'NOT_FOUND'
+      );
     }
-    return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus store dengan id ${req.params.idStore}`, null);
+
+    await connection.beginTransaction();
+
+    // 1. Ambil semua id_order yang terdampak sebelum dihapus
+    const [affectedOrders] = await connection.query(`
+      SELECT DISTINCT op.id_order
+      FROM order_products op
+      JOIN store_products sp ON sp.id = op.id_store_product
+      WHERE sp.id_store = ?`,
+      [idStore]
+    );
+
+    // 2. Hapus order_products yang terkait store ini
+    await connection.query(`
+      DELETE op FROM order_products op
+      JOIN store_products sp ON sp.id = op.id_store_product
+      WHERE sp.id_store = ?`,
+      [idStore]
+    );
+
+    // 3. Recalculate total_price order yang terdampak
+    if (affectedOrders.length > 0) {
+      const affectedIds = affectedOrders.map(o => o.id_order);
+      await connection.query(`
+        UPDATE orders
+        SET total_price = (
+          SELECT COALESCE(SUM(price * quantity), 0)
+          FROM order_products
+          WHERE id_order = orders.id
+        )
+        WHERE id IN (?)`,
+        [affectedIds]
+      );
+    }
+
+    // 4. Hapus store_products
+    await connection.query(`DELETE FROM store_products WHERE id_store = ?`,[idStore]);
+
+    // 5. Hapus store
+    await connection.query(`DELETE FROM stores WHERE id = ?`,[idStore]);
+
+    await connection.commit();
+
+    responseFormat.sendResponseFormat( res, 200, `Berhasil menghapus store dengan id ${idStore}`, store[0]);
+
   } catch (err) {
-    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    await connection.rollback();
+    responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+  } finally {
+    connection.release();
   }
 }
 
