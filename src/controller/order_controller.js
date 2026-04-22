@@ -114,9 +114,9 @@ async function updateStatusOrder(req, res) {
         return responseFormat.sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
     }
 
-    const q = 'update orders set ? where id = ?';
+    const q = 'UPDATE orders SET status = ? WHERE id = ?';
     try {
-        const [result] = await database.query(q, [req.body, req.params.idOrder]);
+        const [result] = await database.query(q, [req.body, Number(req.params.idOrder)]);
         if (result.affectedRows === 0) {
             return responseFormat.sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
         }
