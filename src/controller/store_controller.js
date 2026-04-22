@@ -83,7 +83,8 @@ async function updateStoreData(req, res) {
     if (result.affectedRows === 0) {
       return responseFormat.sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengupdate data store', null);
+    const [updated] = await database.query('SELECT * FROM stores WHERE id=?', [req.params.idStore])
+    return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengupdate data store', updated[0]);
   } catch (err) {
     return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }

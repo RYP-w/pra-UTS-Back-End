@@ -6,11 +6,11 @@ import guard from '../guard/guard.js';
 
 const router = express.Router();
 
-router.post('/', async (requestAnimationFrame, res) => { //? Tambahkan toko
+router.post('/', async (req, res) => { //? Tambahkan toko
     if (!guard.setGuard(req, res, {required:{"name":"string","address":"string"}, optional:{}})) {
         return;
     }
-    storeController.createStore(requestAnimationFrame, res);
+    storeController.createStore(req, res);
 });
 
 router.get('/', storeController.getAllStores); //? Dapatkan semua toko

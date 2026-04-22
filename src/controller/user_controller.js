@@ -61,7 +61,7 @@ async function getAllUsers(req, res) {
             prev_page: currentPage > 1,
         };
 
-        return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengambil semua data user', rows, null, filterInfo, paginationInfo);
+       return responseFormat.sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil ambil semua data store', rows, null, filterInfo, paginationInfo);
     } catch (err) {
         return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
     }
@@ -87,20 +87,21 @@ async function updateUserData(req, res) {
         if (result.affectedRows === 0) {
         return responseFormat.sendResponseFormat(res, 404, `User dengan id ${req.params.idUser} tidak ditemukan`, null, 'NOT_FOUND');
         }
-        return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengupdate data user', null);
+
+        const [updated] = await database.query('SELECT * FROM users WHERE id=?', [req.params.idUser])
+        return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengupdate data user', updated[0]);
     } catch (err) {
         return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
     }
 }
 
 async function deleteUser(req, res) {
-    const q = 'delete from users where id = ?';
     try {
-        const [result] = await database.query(q, [req.params.idUser]);
+        const [result] = await database.query('SELECT * FROM users WHERE id= ?',[req.params.idUser]);
         if (result.affectedRows === 0) {
         return responseFormat.sendResponseFormat(res, 404, `User dengan id ${req.params.idUser} tidak ditemukan`, null, 'NOT_FOUND');
         }
-        return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus user dengan id ${req.params.idUser}`, null);
+        return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus user dengan id ${req.params.idUser}`,result[0]);
     } catch (err) {
         return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
     }
