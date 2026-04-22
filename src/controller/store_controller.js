@@ -150,11 +150,11 @@ async function deleteStore(req, res) {
 
     await connection.commit();
 
-    responseFormat.sendResponseFormat( res, 200, `Berhasil menghapus store dengan id ${idStore}`, store[0]);
+    return responseFormat.sendResponseFormat( res, 200, `Berhasil menghapus store dengan id ${idStore}`, store[0]);
 
   } catch (err) {
     await connection.rollback();
-    responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   } finally {
     connection.release();
   }

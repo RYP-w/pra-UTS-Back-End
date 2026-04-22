@@ -84,15 +84,68 @@ async function updateProductData(req, res) {
 }
 
 async function deleteProduct(req, res) {
-  const q = 'delete from products where id = ?';
+  const { idProduct } = req.params;
+  const connection = await database.getConnection();
+
   try {
-    const [result] = await database.query(q, [req.params.idProduct]);
-    if (result.affectedRows == 0) {
-      return responseFormat.sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
+    const [product] = await connection.query(
+      `SELECT * FROM products WHERE id = ?`,
+      [idProduct]
+    );
+
+    if (product.length === 0) {
+      return responseFormat.sendResponseFormat(res, 404,`Product dengan id ${idProduct} tidak ditemukan`,null, 'NOT_FOUND');
     }
-    return responseFormat.sendResponseFormat(res, 200, `Berhasil menghapus product dengan id ${req.params.idProduct}`, null);
+
+    await connection.beginTransaction();
+
+    // 1. Ambil semua id_order yang terdampak sebelum dihapus
+    const [affectedOrders] = await connection.query(`
+      SELECT DISTINCT op.id_order
+        FROM order_products op
+        JOIN store_products sp ON sp.id = op.id_store_product
+        WHERE sp.id_product = ?`,
+      [idProduct]
+    );
+
+    // 2. Hapus order_products yang terkait produk ini
+    await connection.query(`
+      DELETE op FROM order_products op
+        JOIN store_products sp ON sp.id = op.id_store_product
+        WHERE sp.id_product = ?`,
+      [idProduct]
+    );
+
+    // 3. Recalculate total_price order yang terdampak
+    if (affectedOrders.length > 0) {
+      const affectedIds = affectedOrders.map(o => o.id_order);
+      await connection.query(`
+      UPDATE orders
+        SET total_price = (
+          SELECT COALESCE(SUM(price * quantity), 0)
+          FROM order_products
+          WHERE id_order = orders.id
+        )
+        WHERE id IN (?)`,
+      [affectedIds]
+    );
+    }
+
+    // 4. Hapus store_products yang terkait produk ini
+    await connection.query(`DELETE FROM store_products WHERE id_product = ?`,[idProduct]);
+
+    // 5. Hapus produk
+    await connection.query(`DELETE FROM products WHERE id = ?`,[idProduct]);
+
+    await connection.commit();
+
+    return responseFormat.sendResponseFormat(res, 200,`Berhasil menghapus product dengan id ${idProduct}`,product[0]);
+
   } catch (err) {
+    await connection.rollback();
     return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+  } finally {
+    connection.release();
   }
 }
 
