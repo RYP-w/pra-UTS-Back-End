@@ -19,7 +19,7 @@ router.get('/', orderController.getAllOrders); //? Dapatkan semua order
 router.get('/:idOrder', orderController.getOrder); //? Dapatkan detail order
 
 router.put('/:idOrder/status', async (req, res) => { //? Update status order
-    if (!guard.setGuard(req, res, {required:{}, optional:{"status":"string"}})) {
+    if (!guard.setGuard(req, res, {required:{"status":"string"}, optional:{}})) {
         return;
     }
     orderController.updateStatusOrder(req, res);
