@@ -8,7 +8,7 @@ async function createProduct(req, res) {
     const [newProduct] = await database.query('SELECT * FROM products WHERE id = ?', [result.insertId]);
     return sendResponseFormat(res, 201, 'Berhasil menambahkan product', newProduct[0]);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -52,9 +52,9 @@ async function getAllProducts(req, res) {
       prev_page: currentPage > 1,
     };
 
-    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil ambil semua data product', rows, null, filterInfo, paginationInfo);
+    return responseFormat.sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil ambil semua data product', rows, null, filterInfo, paginationInfo);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -63,11 +63,11 @@ async function getProductDetail(req, res) {
   try {
     const [result] = await database.query(q, [req.params.idProduct]);
     if (result.length === 0) {
-      return sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil ambil detail product', result[0]);
+    return responseFormat.sendResponseFormat(res, 200, 'Berhasil ambil detail product', result[0]);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
@@ -76,17 +76,19 @@ async function updateProductData(req, res) {
   try {
     const [result] = await database.query(q, [req.body, req.params.idProduct]);
     if (result.affectedRows == 0) {
-      return sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Product dengan id ${req.params.idProduct} tidak ditemukan`, null, 'NOT_FOUND');
     }
     const [updated] = await database.query('SELECT * FROM products WHERE id = ?', [req.params.idProduct]);
     return sendResponseFormat(res, 200, 'Berhasil update data product', updated[0]);
   } catch (err) {
-    sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
 async function deleteProduct(req, res) {
-  const q = 'delete from products where id = ?';
+  const { idProduct } = req.params;
+  const connection = await database.getConnection();
+
   try {
     // ambil data sebelum dihapus
     const [existing] = await database.query('SELECT * FROM products WHERE id = ?', [req.params.idProduct]);
@@ -97,7 +99,10 @@ async function deleteProduct(req, res) {
     // balek data yang sudah dihapus
     return sendResponseFormat(res, 200, `Berhasil menghapus user dengan id ${req.params.idProduct}`, existing[0]);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    await connection.rollback();
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+  } finally {
+    connection.release();
   }
 }
 

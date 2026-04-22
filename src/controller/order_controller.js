@@ -5,8 +5,7 @@ async function createOrder(req, res) {
   const q = 'insert into orders set ?';
   try {
     const [result] = await database.query(q, [req.body]);
-    const [newOrder] = await database.query('SELECT * FROM orders WHERE id = ?', [result.insertId]);
-    return sendResponseFormat(res, 201, 'Berhasil menambahkan order', newOrder[0]);
+    return sendResponseFormat(res, 201, 'Berhasil menambahkan order', { id: result.insertId });
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -20,7 +19,7 @@ async function getAllOrders(req, res) {
 
     // Validasi status jika dikirim
     if (status && !VALID_STATUS.includes(status)) {
-      return sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
+      return responseFormat.sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
     }
 
     const conditions = [];
@@ -52,17 +51,17 @@ async function getAllOrders(req, res) {
     // JOIN ke users supaya nama user ikut tampil
     const [rows] = await database.query(
       `SELECT 
-        o.id,
-        o.id_user,
-        u.name  AS user_name,
-        o.date,
-        o.status,
-        o.total_price
-      FROM orders o
-      JOIN users u ON o.id_user = u.id
-      ${whereS}
-      ORDER BY o.date DESC
-      LIMIT ? OFFSET ?`,
+            o.id,
+            o.id_user,
+            u.name  AS user_name,
+            o.date,
+            o.status,
+            o.total_price
+        FROM orders o
+        JOIN users u ON o.id_user = u.id
+        ${whereS}
+        ORDER BY o.date DESC
+        LIMIT ? OFFSET ?`,
       [...values, itemsPerPage, offset],
     );
 
@@ -80,39 +79,39 @@ async function getAllOrders(req, res) {
       prev_page: currentPage > 1,
     };
 
-    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil mengambil semua data order', rows, null, filterInfo, paginationInfo);
+    return responseFormat.sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil mengambil semua data order', rows, null, filterInfo, paginationInfo);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
 async function getOrder(req, res) {
   const q = `
-    SELECT 
-      o.id,
-      o.id_user,
-      u.name  AS user_name,
-      o.date,
-      o.status,
-      o.total_price
-    FROM orders o
-    JOIN users u ON o.id_user = u.id
-    WHERE o.id = ?`;
+        SELECT 
+        o.id,
+        o.id_user,
+        u.name  AS user_name,
+        o.date,
+        o.status,
+        o.total_price
+        FROM orders o
+        JOIN users u ON o.id_user = u.id
+        WHERE o.id = ?`;
   try {
     const [result] = await database.query(q, [req.params.idOrder]);
     if (result.length === 0) {
-      return sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
+      return responseFormat.sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    return sendResponseFormat(res, 200, 'Berhasil mengambil detail order', result[0]);
+    return responseFormat.sendResponseFormat(res, 200, 'Berhasil mengambil detail order', result[0]);
   } catch (err) {
-    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+    return responseFormat.sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
 async function updateStatusOrder(req, res) {
   // Validasi status jika dikirim di body
   if (req.body.status && !VALID_STATUS.includes(req.body.status)) {
-    return sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
+    return responseFormat.sendResponseFormat(res, 400, `Status tidak valid. Gunakan salah satu dari: ${VALID_STATUS.join(', ')}`, null, 'BAD_REQUEST');
   }
 
   const q = 'update orders set ? where id = ?';
@@ -121,8 +120,7 @@ async function updateStatusOrder(req, res) {
     if (result.affectedRows === 0) {
       return sendResponseFormat(res, 404, `Order dengan id ${req.params.idOrder} tidak ditemukan`, null, 'NOT_FOUND');
     }
-    const [updated] = await database.query('SELECT * FROM orders WHERE id = ?', [req.params.idOrder]);
-    return sendResponseFormat(res, 200, 'Berhasil mengupdate status order', updated[0]);
+    return sendResponseFormat(res, 200, 'Berhasil mengupdate status order', null);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -133,32 +131,21 @@ async function deleteOrder(req, res) {
   const connection = await database.getConnection();
 
   try {
-    // 1. Ambil data order SEBELUM dihapus
-    const [existing] = await connection.query(
-      `SELECT o.*, u.name AS user_name
-       FROM orders o
-       JOIN users u ON o.id_user = u.id
-       WHERE o.id = ?`,
-      [id_order],
-    );
+    await connection.beginTransaction();
 
-    if (existing.length === 0) {
+    // 1. Hapus semua order_products yang berelasi dulu (karena ada foreign key)
+    await connection.query('DELETE FROM order_products WHERE id_order = ?', [id_order]);
+
+    // 2. Baru hapus order-nya
+    const [result] = await connection.query('DELETE FROM orders WHERE id = ?', [id_order]);
+
+    if (result.affectedRows === 0) {
       await connection.rollback();
       return sendResponseFormat(res, 404, `Order dengan id ${id_order} tidak ditemukan`, null, 'NOT_FOUND');
     }
 
-    await connection.beginTransaction();
-
-    // 2. Hapus semua order_products yang berelasi dulu (karena ada foreign key)
-    await connection.query('DELETE FROM order_products WHERE id_order = ?', [id_order]);
-
-    // 3. Hapus order-nya
-    await connection.query('DELETE FROM orders WHERE id = ?', [id_order]);
-
     await connection.commit();
-
-    // 4. Kembalikan data order yang sudah dihapus
-    return sendResponseFormat(res, 200, `Berhasil menghapus order dengan id ${id_order}`, existing[0]);
+    return sendResponseFormat(res, 200, `Berhasil menghapus order dengan id ${id_order}`, null);
   } catch (err) {
     await connection.rollback();
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);

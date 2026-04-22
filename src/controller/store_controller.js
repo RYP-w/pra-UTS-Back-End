@@ -92,7 +92,9 @@ async function updateStoreData(req, res) {
 }
 
 async function deleteStore(req, res) {
-  const q = 'delete from stores where id = ?';
+  const { idStore } = req.params;
+  const connection = await database.getConnection();
+
   try {
     const [existing] = await database.query('SELECT * FROM stores WHERE id = ?', [req.params.idStore]);
     if (existing.length === 0) {
@@ -102,7 +104,10 @@ async function deleteStore(req, res) {
     // balek data yang sudah dihapus
     return sendResponseFormat(res, 200, `Berhasil menghapus store dengan id ${req.params.idStore}`, existing[0]);
   } catch (err) {
+    await connection.rollback();
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
+  } finally {
+    connection.release();
   }
 }
 
