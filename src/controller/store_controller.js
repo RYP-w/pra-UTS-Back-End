@@ -80,9 +80,12 @@ async function updateStoreData(req, res) {
   const q = 'update stores set ? where id = ?';
   try {
     const [result] = await database.query(q, [req.body, req.params.idStore]);
-    res.send(result);
+    if (result.affectedRows === 0) {
+      return sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
+    }
+    return sendResponseFormat(res, 200, 'Berhasil mengupdate data store', null);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
