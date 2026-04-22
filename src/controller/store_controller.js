@@ -57,7 +57,7 @@ async function getAllStores(req, res) {
       prev_page: currentPage > 1,
     };
 
-    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil mengambil semua data store', rows, null, filterInfo, paginationInfo);
+    return sendResponseFormat(res, 200, rows.length === 0 ? 'Tidak ada data yang cocok dengan filter' : 'Berhasil ambil semua data store', rows, null, filterInfo, paginationInfo);
   } catch (err) {
     return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
@@ -67,9 +67,12 @@ async function getStoreDetails(req, res) {
   const q = 'select * from stores where id = ?';
   try {
     const [result] = await database.query(q, [req.params.idStore]);
-    res.send(result);
+    if (result.length === 0) {
+      return sendResponseFormat(res, 404, `Store dengan id ${req.params.idStore} tidak ditemukan`, null, 'NOT_FOUND');
+    }
+    return sendResponseFormat(res, 200, 'Berhasil mengambil detail store', result[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendResponseFormat(res, 500, 'Internal server error', null, err.message);
   }
 }
 
