@@ -136,7 +136,7 @@ async function deleteOrder(req, res) {
         // 1. Hapus semua order_products yang berelasi dulu (karena ada foreign key)
         await connection.query('DELETE FROM order_products WHERE id_order = ?', [id_order]);
 
-        // 2. Baru hapus order-nya
+        // 2. hapus order
         const [result] = await connection.query('DELETE FROM orders WHERE id = ?', [id_order]);
 
         if (result.affectedRows === 0) {

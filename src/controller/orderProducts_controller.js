@@ -158,53 +158,47 @@ async function removeProduct_from_order(req, res) {
     const id_store_product = req.params.idProduct;
 
     const connection = await database.getConnection();
-    
+
     try {
         await connection.beginTransaction();
 
-        // 1. Ambil status order dan kunci baris order
-        const [orderRows] = await connection.query("SELECT status FROM orders WHERE id = ? FOR UPDATE", [id_order]);
+        // 1. Cek order ada
+        const [orderRows] = await connection.query(`SELECT id FROM orders WHERE id = ? FOR UPDATE`,[id_order]);
 
         if (orderRows.length === 0) {
-            throw new Error("Order tidak ditemukan.");
+            await connection.rollback();
+            return responseFormat.sendResponseFormat(res, 404, `Order dengan id ${id_order} tidak ditemukan`, null, 'NOT_FOUND');
         }
-        
-        const orderStatus = orderRows[0].status;
 
-        // 2. Ambil kuantitas produk yang mau dihapus dari order_products
-        const [orderItemRows] = await connection.query("SELECT quantity FROM order_products WHERE id_order = ? AND id_store_product = ? FOR UPDATE", [id_order, id_store_product]);
+        // 2. Cek item ada di order
+        const [orderItemRows] = await connection.query(`SELECT id FROM order_products WHERE id_order = ? AND id_store_product = ? FOR UPDATE`,[id_order, id_store_product]);
 
         if (orderItemRows.length === 0) {
-            throw new Error("Produk tidak ditemukan dalam order ini.");
+            await connection.rollback();
+            return responseFormat.sendResponseFormat(res, 404, `Produk tidak ditemukan dalam order ini`, null, 'NOT_FOUND');
         }
 
-        const itemQuantity = orderItemRows[0].quantity;
+        // 3. Hapus item dari order_products
+        await connection.query(`DELETE FROM order_products WHERE id_order = ? AND id_store_product = ?`,[id_order, id_store_product]);
 
-        // 3. Jika status belum selesai, kembalikan stok ke toko
-        if (orderStatus !== 'selesai') {
-            await connection.query("UPDATE store_products SET quantity = quantity + ? WHERE id = ?", [itemQuantity, id_store_product]);
-        }
-
-        // 4. Hapus item dari order_products
-        const [deleteResult] = await connection.query( "DELETE FROM order_products WHERE id_order = ? AND id_store_product = ?", [id_order, id_store_product]);
-
-        // 5. Hitung ulang total_price pada orders 
-        // IFNULL digunakan untuk menangani jika order menjadi kosong 
-        await connection.query(
-            `UPDATE orders SET total_price = IFNULL((
-                SELECT SUM(price * quantity) 
+        // 4. Hitung ulang total_price
+        await connection.query(`
+            UPDATE orders
+            SET total_price = IFNULL((
+                SELECT SUM(price * quantity)
                 FROM order_products
                 WHERE id_order = ?
-            ), 0) WHERE id = ?`,
+            ), 0)
+            WHERE id = ?`,
             [id_order, id_order]
         );
 
         await connection.commit();
-        return responseFormat.sendResponseFormat(res, 200, "Produk berhasil dihapus dari order", deleteResult);
+        return responseFormat.sendResponseFormat(res, 200, `Produk berhasil dihapus dari order`, null);
 
     } catch (err) {
         await connection.rollback();
-        return responseFormat.sendResponseFormat(res, 500, "Gagal menghapus produk dari order", null, [err.message]);
+        return responseFormat.sendResponseFormat(res, 500, `Gagal menghapus produk dari order`, null, [err.message]);
     } finally {
         connection.release();
     }
